@@ -37,7 +37,7 @@ function mergeObjects(objects) {
   const [obj1, obj2] = objects;
   if (!obj1 && !obj2) return {};
   if (!obj2) return obj1;
-  Object.keys(obj2).forEach((key) => {
+  Object.entries(obj2).forEach(([key]) => {
     obj1[key] = obj1[key] ? obj2[key] + obj1[key] : obj2[key];
   });
   return obj1;
