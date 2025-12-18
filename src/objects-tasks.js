@@ -368,33 +368,147 @@ function group(array, keySelector, valueSelector) {
  *  For more examples see unit tests.
  */
 
+class Selector {
+  constructor() {
+    this.elementName = null;
+    this.idName = null;
+    this.classesArr = [];
+    this.attributesArr = [];
+    this.pseudoClassesArr = [];
+    this.pseudoElementName = null;
+    this.lastOrder = 0;
+  }
+
+  validateOrder(type) {
+    const ORDER = {
+      element: 1,
+      id: 2,
+      class: 3,
+      attr: 4,
+      pseudoClass: 5,
+      pseudoElement: 6,
+    };
+
+    if (ORDER[type] < this.lastOrder) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+
+    this.lastOrder = ORDER[type];
+  }
+
+  element(value) {
+    if (this.elementName !== null) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more than one time inside the selector'
+      );
+    }
+    this.validateOrder('element');
+    this.elementName = value;
+    return this;
+  }
+
+  id(value) {
+    if (this.idName !== null) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more than one time inside the selector'
+      );
+    }
+    this.validateOrder('id');
+    this.idName = value;
+    return this;
+  }
+
+  class(value) {
+    this.validateOrder('class');
+    this.classesArr.push(value);
+    return this;
+  }
+
+  attr(value) {
+    this.validateOrder('attr');
+    this.attributesArr.push(value);
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.validateOrder('pseudoClass');
+    this.pseudoClassesArr.push(value);
+    return this;
+  }
+
+  pseudoElement(value) {
+    if (this.pseudoElementName !== null) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more than one time inside the selector'
+      );
+    }
+    this.validateOrder('pseudoElement');
+    this.pseudoElementName = value;
+    return this;
+  }
+
+  stringify() {
+    const parts = [];
+    if (this.elementName !== null) {
+      parts.push(this.elementName);
+    }
+    if (this.idName !== null) {
+      parts.push(`#${this.idName}`);
+    }
+    if (this.classesArr.length > 0) {
+      parts.push(`.${this.classesArr.join('.')}`);
+    }
+    if (this.attributesArr.length > 0) {
+      parts.push(this.attributesArr.map((a) => `[${a}]`).join(''));
+    }
+    if (this.pseudoClassesArr.length > 0) {
+      parts.push(`:${this.pseudoClassesArr.join(':')}`);
+    }
+    if (this.pseudoElementName !== null) {
+      parts.push(`::${this.pseudoElementName}`);
+    }
+    return parts.join('');
+  }
+}
+
+function CombinedSelector(left, combinator, right) {
+  return {
+    stringify() {
+      return `${left.stringify()} ${combinator} ${right.stringify()}`;
+    },
+  };
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  selector: new Selector(),
+  element(value) {
+    return new Selector().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new Selector().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new Selector().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new Selector().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new Selector().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new Selector().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return CombinedSelector(selector1, combinator, selector2);
   },
 };
 
